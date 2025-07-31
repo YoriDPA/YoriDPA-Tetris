@@ -23,6 +23,7 @@
             align-items: center;
             width: 100%;
             height: 100%;
+            position: relative; /* Necessário para elementos posicionados absolutamente */
         }
         canvas#tetris-canvas {
             background-color: #0f0f1a;
@@ -46,6 +47,35 @@
             font-size: 1rem; cursor: pointer; transition: background-color 0.2s;
         }
         #modal-content button:hover { background-color: #ffc300; }
+
+        /* Estilo para o popup de pontuação */
+        #score-popup {
+            position: absolute;
+            top: 30px;
+            background-color: rgba(252, 163, 17, 0.85);
+            color: #1a1a2e;
+            padding: 10px 25px;
+            border-radius: 20px;
+            font-size: 1.2rem;
+            z-index: 10;
+            pointer-events: none;
+            opacity: 0;
+            transition: opacity 0.5s ease-in-out;
+        }
+        #score-popup.show {
+            opacity: 1;
+        }
+        
+        /* Estilo para a assinatura do desenvolvedor */
+        #dev-signature {
+            position: absolute;
+            bottom: 10px;
+            right: 15px;
+            font-size: 0.7rem;
+            color: white;
+            opacity: 0.4;
+            pointer-events: none;
+        }
     </style>
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -55,6 +85,11 @@
 
     <div id="game-container">
         <canvas id="tetris-canvas"></canvas>
+        <div id="score-popup">
+            <span id="score">0</span>
+        </div>
+        <!-- Assinatura do Desenvolvedor -->
+        <div id="dev-signature">Dev. YoriDPA</div>
     </div>
 
     <div id="modal-overlay">
@@ -62,6 +97,8 @@
             <h1 id="modal-title">TETRIS</h1>
             <p id="modal-text">Controles: Setas (PC) ou Toque/Arraste (Celular).</p>
             <button id="start-button">Iniciar Jogo</button>
+            <!-- Assinatura na tela inicial -->
+            <p style="font-size: 0.8rem; margin-top: 25px; opacity: 0.7;">Dev. YoriDPA</p>
         </div>
     </div>
 
@@ -74,6 +111,9 @@
     const modalTitle = document.getElementById('modal-title');
     const modalText = document.getElementById('modal-text');
     const startButton = document.getElementById('start-button');
+    
+    const scorePopup = document.getElementById('score-popup');
+    const scoreEl = document.getElementById('score');
 
     const COLS = 10;
     const ROWS = 20;
@@ -94,13 +134,15 @@
 
     let player;
     let nextPiece;
+    let score;
     let lines;
     let level;
     let dropCounter;
     let dropInterval;
     let lastTime;
-    let isGameOver = true; // FIX: Initialize isGameOver to true
+    let isGameOver = true;
     let animationFrameId;
+    let scoreTimeout;
 
     function createBoard() {
         return Array.from({ length: ROWS }, () => Array(COLS).fill(0));
@@ -109,7 +151,7 @@
     function createPiece(type) {
         const matrix = SHAPES[type];
         return {
-            x: 0, // A posição será definida em resetPlayer
+            x: 0,
             y: 0,
             matrix: matrix,
             type: type
@@ -118,16 +160,13 @@
 
     function resetPlayer() {
         if (!nextPiece) {
-            // Se for o início do jogo, crie as duas peças
             player = createPiece(Math.floor(Math.random() * 7) + 1);
             nextPiece = createPiece(Math.floor(Math.random() * 7) + 1);
         } else {
-            // Se não, a próxima peça se torna a atual
             player = nextPiece;
             nextPiece = createPiece(Math.floor(Math.random() * 7) + 1);
         }
         
-        // Centraliza a peça no topo
         player.x = Math.floor(COLS / 2) - Math.floor(player.matrix[0].length / 2);
         player.y = 0;
         
@@ -137,9 +176,12 @@
     }
 
     function draw() {
+        if (!ctx) return;
         ctx.clearRect(0, 0, canvas.width, canvas.height);
         drawMatrix(board, { x: 0, y: 0 });
-        drawMatrix(player.matrix, { x: player.x, y: player.y });
+        if(player) {
+            drawMatrix(player.matrix, { x: player.x, y: player.y });
+        }
     }
     
     function drawMatrix(matrix, offset) {
@@ -167,6 +209,7 @@
     }
 
     function checkCollision(board, player) {
+        if (!player) return false;
         for (let y = 0; y < player.matrix.length; y++) {
             for (let x = 0; x < player.matrix[y].length; x++) {
                 if (player.matrix[y][x] !== 0 &&
@@ -184,6 +227,7 @@
     }
 
     function playerRotate() {
+        if (!player) return;
         const pos = player.x;
         let offset = 1;
         player.matrix = rotate(player.matrix);
@@ -200,6 +244,7 @@
     }
 
     function playerMove(dir) {
+        if (!player) return;
         player.x += dir;
         if (checkCollision(board, player)) {
             player.x -= dir;
@@ -207,6 +252,7 @@
     }
 
     function playerDrop() {
+        if (!player) return;
         player.y++;
         if (checkCollision(board, player)) {
             player.y--;
@@ -218,6 +264,7 @@
     }
     
     function playerHardDrop() {
+        if (!player) return;
         while (!checkCollision(board, player)) {
             player.y++;
         }
@@ -244,6 +291,17 @@
         
         if (clearedLines > 0) {
             lines += clearedLines;
+            const points = [0, 100, 300, 500, 800][clearedLines] * level;
+            score += points;
+
+            scoreEl.textContent = score;
+            scorePopup.classList.add('show');
+            
+            if (scoreTimeout) clearTimeout(scoreTimeout);
+            scoreTimeout = setTimeout(() => {
+                scorePopup.classList.remove('show');
+            }, 1500);
+
             if (Math.floor(lines / 10) + 1 > level) {
                 level = Math.floor(lines / 10) + 1;
                 dropInterval = Math.max(150, 1000 - (level * 50));
@@ -252,13 +310,9 @@
     }
 
     function update(time = 0) {
-        if (isGameOver) {
-            return;
-        }
+        if (isGameOver) return;
 
-        if (!lastTime) {
-            lastTime = time;
-        }
+        if (!lastTime) lastTime = time;
         const deltaTime = time - lastTime;
         lastTime = time;
 
@@ -281,6 +335,10 @@
 
         canvas.width = COLS * blockSize;
         canvas.height = ROWS * blockSize;
+        
+        if (!isGameOver) {
+            draw();
+        }
     }
     
     function startGame() {
@@ -290,12 +348,17 @@
         
         isGameOver = false;
         board = createBoard();
+        score = 0;
         lines = 0;
         level = 1;
         dropInterval = 1000;
         dropCounter = 0;
         lastTime = 0;
+        player = null;
         nextPiece = null;
+        
+        scorePopup.classList.remove('show');
+        if (scoreTimeout) clearTimeout(scoreTimeout);
         
         handleResize();
         resetPlayer();
@@ -309,12 +372,11 @@
         isGameOver = true;
         cancelAnimationFrame(animationFrameId);
         modalTitle.innerText = "FIM DE JOGO";
-        modalText.innerText = "Obrigado por jogar!";
+        modalText.innerText = `Sua pontuação final: ${score}`;
         startButton.innerText = "Jogar Novamente";
         modalOverlay.style.display = 'flex';
     }
 
-    // Controles de Teclado
     document.addEventListener('keydown', event => {
         if (isGameOver) return;
         if (event.key === 'ArrowLeft') playerMove(-1);
@@ -324,7 +386,6 @@
         else if (event.code === 'Space') playerHardDrop();
     });
     
-    // Controles de Toque
     let touchStartX = 0;
     let touchStartY = 0;
     let isDragging = false;
@@ -374,10 +435,9 @@
         }
     });
 
-    // Inicialização
     window.addEventListener('resize', handleResize);
     startButton.addEventListener('click', startGame);
-    handleResize(); // Define o tamanho inicial do canvas
+    handleResize();
 
     </script>
 </body>
