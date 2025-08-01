@@ -107,7 +107,7 @@
                 <button id="save-score-button">Salvar Recorde</button>
             </div>
             <div>
-                <button id="start-button">Iniciar Jogo</button>
+                <button id="start-button" disabled>Conectando...</button>
                 <button id="scores-button">Recordes</button>
             </div>
             <div id="high-scores-container" class="hidden">
@@ -120,7 +120,7 @@
     <script type="module">
         // Importações do Firebase
         import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
-        import { getAuth, signInAnonymously, signInWithCustomToken } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
+        import { getAuth, signInAnonymously, signInWithCustomToken, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
         import { getFirestore, collection, doc, getDoc, setDoc, query, orderBy, limit, getDocs } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
 
         window.addEventListener('load', () => {
@@ -171,6 +171,14 @@
                     db = getFirestore(app);
                     auth = getAuth(app);
 
+                    onAuthStateChanged(auth, (user) => {
+                        if (user) {
+                            console.log("Usuário autenticado:", user.uid);
+                            startButton.disabled = false;
+                            startButton.innerText = "Iniciar Jogo";
+                        }
+                    });
+
                     if (typeof __initial_auth_token !== 'undefined' && __initial_auth_token) {
                         await signInWithCustomToken(auth, __initial_auth_token);
                     } else {
@@ -178,6 +186,8 @@
                     }
                 } catch (error) {
                     console.error("Erro ao inicializar o Firebase:", error);
+                    startButton.disabled = true;
+                    startButton.innerText = "Erro de Conexão";
                 }
             }
 
@@ -322,32 +332,32 @@
             
             function initAudio() {
                 if (audioInitialized || typeof window.Tone === 'undefined') return;
-                musicSynth = new Tone.Synth({
+                musicSynth = new window.Tone.Synth({
                     oscillator: { type: 'fmsquare' },
                     envelope: { attack: 0.01, decay: 0.1, sustain: 0.2, release: 0.1 }
                 }).toDestination();
                 
-                scoreSynth = new Tone.Synth({
+                scoreSynth = new window.Tone.Synth({
                     oscillator: { type: 'triangle8' },
                     envelope: { attack: 0.005, decay: 0.1, sustain: 0.3, release: 1 }
                 }).toDestination();
 
-                musicLoop = new Tone.Sequence((time, note) => {
+                musicLoop = new window.Tone.Sequence((time, note) => {
                     if (musicSynth) musicSynth.triggerAttackRelease(note, '8n', time);
                 }, ['C2', ['E2', 'G2'], 'A2', 'G2'], '4n');
                 
-                Tone.Transport.bpm.value = 120;
+                window.Tone.Transport.bpm.value = 120;
                 audioInitialized = true;
             }
 
             async function startGame() {
                 try {
-                    if (typeof Tone !== 'undefined' && !audioInitialized) {
-                        await Tone.start();
+                    if (typeof window.Tone !== 'undefined' && !audioInitialized) {
+                        await window.Tone.start();
                         initAudio();
                     }
-                    if (Tone && Tone.Transport.state !== 'started') {
-                        Tone.Transport.start();
+                    if (window.Tone && window.Tone.Transport.state !== 'started') {
+                        window.Tone.Transport.start();
                     }
                     if (musicLoop) musicLoop.start(0);
                 } catch (e) {
@@ -370,8 +380,8 @@
 
             async function gameOver() {
                 isGameOver = true;
-                if (typeof Tone !== 'undefined' && Tone.Transport.state === 'started') {
-                    Tone.Transport.stop();
+                if (typeof window.Tone !== 'undefined' && window.Tone.Transport.state === 'started') {
+                    window.Tone.Transport.stop();
                 }
                 if (musicLoop) musicLoop.stop();
                 cancelAnimationFrame(animationFrameId);
@@ -528,9 +538,9 @@
             });
             muteButton.addEventListener('click', () => {
                 if (!audioInitialized) return;
-                if (typeof Tone !== 'undefined') {
-                    Tone.Destination.mute = !Tone.Destination.mute;
-                    muteButton.textContent = Tone.Destination.mute ? '🔇' : '🔊';
+                if (typeof window.Tone !== 'undefined') {
+                    window.Tone.Destination.mute = !window.Tone.Destination.mute;
+                    muteButton.textContent = window.Tone.Destination.mute ? '🔇' : '🔊';
                 }
             });
 
