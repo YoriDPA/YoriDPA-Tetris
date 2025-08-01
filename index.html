@@ -118,7 +118,6 @@
         import { getAuth, signInAnonymously, signInWithCustomToken } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
         import { getFirestore, collection, doc, getDoc, setDoc, query, orderBy, limit, getDocs } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
 
-        // Adia a execução de todo o código do jogo até que a página esteja totalmente carregada
         window.addEventListener('load', () => {
             // --- Variáveis Globais e Configuração ---
             const canvas = document.getElementById('tetris-canvas');
@@ -154,13 +153,11 @@
             let isGameOver = true;
             let animationFrameId, scoreTimeout;
 
-            // --- Configuração de Áudio com Tone.js ---
             let audioInitialized = false;
             let musicSynth, scoreSynth, musicLoop;
 
-            // --- Configuração do Firebase ---
             let db, auth;
-            const appId = typeof __app_id !== 'undefined' ? __app_id : 'default-tetris-app';
+            const persistentAppId = 'tetris-yoridpa-global';
             
             async function initFirebase() {
                 try {
@@ -179,7 +176,6 @@
                 }
             }
 
-            // --- Funções do Jogo ---
             function createBoard() { return Array.from({ length: ROWS }, () => Array(COLS).fill(0)); }
             function createPiece(type) { return { x: 0, y: 0, matrix: SHAPES[type], type: type }; }
             function resetPlayer() {
@@ -321,32 +317,32 @@
             
             function initAudio() {
                 if (audioInitialized || typeof window.Tone === 'undefined') return;
-                musicSynth = new window.Tone.Synth({
+                musicSynth = new Tone.Synth({
                     oscillator: { type: 'fmsquare' },
                     envelope: { attack: 0.01, decay: 0.1, sustain: 0.2, release: 0.1 }
                 }).toDestination();
                 
-                scoreSynth = new window.Tone.Synth({
+                scoreSynth = new Tone.Synth({
                     oscillator: { type: 'triangle8' },
                     envelope: { attack: 0.005, decay: 0.1, sustain: 0.3, release: 1 }
                 }).toDestination();
 
-                musicLoop = new window.Tone.Sequence((time, note) => {
+                musicLoop = new Tone.Sequence((time, note) => {
                     if (musicSynth) musicSynth.triggerAttackRelease(note, '8n', time);
                 }, ['C2', ['E2', 'G2'], 'A2', 'G2'], '4n');
                 
-                window.Tone.Transport.bpm.value = 120;
+                Tone.Transport.bpm.value = 120;
                 audioInitialized = true;
             }
 
             async function startGame() {
                 try {
-                    if (typeof window.Tone !== 'undefined' && !audioInitialized) {
-                        await window.Tone.start();
+                    if (typeof Tone !== 'undefined' && !audioInitialized) {
+                        await Tone.start();
                         initAudio();
                     }
-                    if (window.Tone && window.Tone.Transport.state !== 'started') {
-                        window.Tone.Transport.start();
+                    if (Tone && Tone.Transport.state !== 'started') {
+                        Tone.Transport.start();
                     }
                     if (musicLoop) musicLoop.start(0);
                 } catch (e) {
@@ -369,8 +365,8 @@
 
             async function gameOver() {
                 isGameOver = true;
-                if (window.Tone && window.Tone.Transport.state === 'started') {
-                    window.Tone.Transport.stop();
+                if (typeof Tone !== 'undefined' && Tone.Transport.state === 'started') {
+                    Tone.Transport.stop();
                 }
                 if (musicLoop) musicLoop.stop();
                 cancelAnimationFrame(animationFrameId);
@@ -395,11 +391,10 @@
                 }
             }
 
-            // --- LÓGICA DE RECORDES COM FIREBASE ---
             async function handlePlayerRecord() {
                 if (!auth.currentUser) return;
                 const userId = auth.currentUser.uid;
-                const userDocRef = doc(db, `/artifacts/${appId}/users/${userId}`);
+                const userDocRef = doc(db, `/artifacts/${persistentAppId}/users/${userId}`);
                 const userDocSnap = await getDoc(userDocRef);
 
                 if (userDocSnap.exists() && userDocSnap.data().name) {
@@ -417,7 +412,7 @@
             
             async function updatePlayerBestScore(userId, name, newScore) {
                 if (!db) return;
-                const scoreDocRef = doc(db, `/artifacts/${appId}/public/data/tetris_highscores/${userId}`);
+                const scoreDocRef = doc(db, `/artifacts/${persistentAppId}/public/data/tetris_highscores/${userId}`);
                 const scoreDocSnap = await getDoc(scoreDocRef);
 
                 if (scoreDocSnap.exists()) {
@@ -435,7 +430,7 @@
                 highScoresList.innerHTML = '<li>Carregando...</li>';
                 
                 try {
-                    const scoresCollection = collection(db, `/artifacts/${appId}/public/data/tetris_highscores`);
+                    const scoresCollection = collection(db, `/artifacts/${persistentAppId}/public/data/tetris_highscores`);
                     const q = query(scoresCollection, orderBy("score", "desc"), limit(10));
                     const querySnapshot = await getDocs(q);
                     
@@ -461,7 +456,6 @@
                 }
             }
 
-            // --- Controles e Event Listeners ---
             document.addEventListener('keydown', event => {
                 if (isGameOver) return;
                 if (event.key === 'ArrowLeft') playerMove(-1);
@@ -516,7 +510,7 @@
                     saveScoreButton.disabled = true;
                     saveScoreButton.innerText = "Salvando...";
                     const userId = auth.currentUser.uid;
-                    await setDoc(doc(db, `/artifacts/${appId}/users/${userId}`), { name: name });
+                    await setDoc(doc(db, `/artifacts/${persistentAppId}/users/${userId}`), { name: name });
                     await updatePlayerBestScore(userId, name, score);
                     saveScoreButton.innerText = "Salvo!";
                 } else {
@@ -525,11 +519,12 @@
             });
             muteButton.addEventListener('click', () => {
                 if (!audioInitialized) return;
-                window.Tone.Destination.mute = !window.Tone.Destination.mute;
-                muteButton.textContent = window.Tone.Destination.mute ? '🔇' : '🔊';
+                if (typeof Tone !== 'undefined') {
+                    Tone.Destination.mute = !Tone.Destination.mute;
+                    muteButton.textContent = Tone.Destination.mute ? '🔇' : '🔊';
+                }
             });
 
-            // --- Inicialização do App ---
             async function main() {
                 await initFirebase();
                 handleResize();
