@@ -166,14 +166,20 @@
             
             async function initFirebase() {
                 try {
-                    // Utiliza a configuração fornecida pelo ambiente
-                    const firebaseConfig = JSON.parse(typeof __firebase_config !== 'undefined' ? __firebase_config : '{}');
-                    
-                    if (!firebaseConfig.apiKey) {
-                        console.error("Configuração do Firebase não encontrada! O placar online não funcionará.");
-                        startButton.disabled = true;
-                        startButton.innerText = "Erro de Configuração";
-                        return;
+                    const firebaseConfigFromEnv = typeof __firebase_config !== 'undefined' ? __firebase_config : '{}';
+                    let firebaseConfig = JSON.parse(firebaseConfigFromEnv);
+
+                    // Se a configuração do ambiente estiver vazia, usa a configuração manual
+                    if (Object.keys(firebaseConfig).length === 0) {
+                        firebaseConfig = {
+                            apiKey: "AIzaSyAHKPetYO0_GKKa6zn7hA77HobsJu_8pUg",
+                            authDomain: "yoridpa-tetris.firebaseapp.com",
+                            projectId: "yoridpa-tetris",
+                            storageBucket: "yoridpa-tetris.firebasestorage.app",
+                            messagingSenderId: "1067967404196",
+                            appId: "1:1067967404196:web:0f56aa3ed0d4f239faae31",
+                            measurementId: "G-SMCMQNN97R"
+                        };
                     }
 
                     const app = initializeApp(firebaseConfig);
@@ -188,9 +194,9 @@
                         }
                     });
 
-                    // Utiliza o token do ambiente se disponível, senão, anônimo
-                    if (typeof __initial_auth_token !== 'undefined' && __initial_auth_token) {
-                        await signInWithCustomToken(auth, __initial_auth_token);
+                    const authToken = typeof __initial_auth_token !== 'undefined' ? __initial_auth_token : null;
+                    if (authToken) {
+                        await signInWithCustomToken(auth, authToken);
                     } else {
                         await signInAnonymously(auth);
                     }
@@ -198,7 +204,18 @@
                 } catch (error) {
                     console.error("Erro ao inicializar o Firebase:", error);
                     startButton.disabled = true;
-                    startButton.innerText = "Erro de Conexão";
+                    if (error.code === 'auth/configuration-not-found') {
+                        startButton.innerText = "Ação Necessária";
+                        modalText.innerHTML = `
+                            <p class="text-red-400 font-bold">A Autenticação Anônima não está ativada no seu projeto Firebase.</p>
+                            <p class="text-sm mt-2">1. Vá para o seu projeto no Firebase.</p>
+                            <p class="text-sm">2. Clique em <strong>Build > Authentication > Sign-in method</strong>.</p>
+                            <p class="text-sm">3. Encontre <strong>"Anônimo"</strong> na lista, ative e salve.</p>
+                            <p class="text-sm mt-2">Depois, atualize esta página.</p>
+                        `;
+                    } else {
+                        startButton.innerText = "Erro de Conexão";
+                    }
                 }
             }
 
