@@ -120,7 +120,7 @@
     <script type="module">
         // Importações do Firebase
         import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
-        import { getAuth, signInAnonymously, onAuthStateChanged, signInWithCustomToken } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
+        import { getAuth, signInAnonymously, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
         import { getFirestore, collection, doc, getDoc, setDoc, query, orderBy, limit, getDocs } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
 
         window.addEventListener('load', () => {
@@ -165,23 +165,17 @@
             const persistentAppId = 'tetris-yoridpa-global';
             
             async function initFirebase() {
+                const firebaseConfig = {
+                  apiKey: "AIzaSyAHKPetYO0_GKKa6zn7hA77HobsJu_8pUg",
+                  authDomain: "yoridpa-tetris.firebaseapp.com",
+                  projectId: "yoridpa-tetris",
+                  storageBucket: "yoridpa-tetris.appspot.com",
+                  messagingSenderId: "1067967404196",
+                  appId: "1:1067967404196:web:0f56aa3ed0d4f239faae31",
+                  measurementId: "G-SMCMQNN97R"
+                };
+
                 try {
-                    const firebaseConfigFromEnv = typeof __firebase_config !== 'undefined' ? __firebase_config : '{}';
-                    let firebaseConfig = JSON.parse(firebaseConfigFromEnv);
-
-                    // Se a configuração do ambiente estiver vazia, usa a configuração manual
-                    if (Object.keys(firebaseConfig).length === 0) {
-                        firebaseConfig = {
-                            apiKey: "AIzaSyAHKPetYO0_GKKa6zn7hA77HobsJu_8pUg",
-                            authDomain: "yoridpa-tetris.firebaseapp.com",
-                            projectId: "yoridpa-tetris",
-                            storageBucket: "yoridpa-tetris.firebasestorage.app",
-                            messagingSenderId: "1067967404196",
-                            appId: "1:1067967404196:web:0f56aa3ed0d4f239faae31",
-                            measurementId: "G-SMCMQNN97R"
-                        };
-                    }
-
                     const app = initializeApp(firebaseConfig);
                     db = getFirestore(app);
                     auth = getAuth(app);
@@ -194,12 +188,7 @@
                         }
                     });
 
-                    const authToken = typeof __initial_auth_token !== 'undefined' ? __initial_auth_token : null;
-                    if (authToken) {
-                        await signInWithCustomToken(auth, authToken);
-                    } else {
-                        await signInAnonymously(auth);
-                    }
+                    await signInAnonymously(auth);
 
                 } catch (error) {
                     console.error("Erro ao inicializar o Firebase:", error);
