@@ -376,6 +376,9 @@
             const saveScoreButton = document.getElementById('save-score-button');
             const muteButton = document.getElementById('mute-button');
             const pauseContent = document.getElementById('pause-content');
+            const resumeButton = document.getElementById('resume-button'); // Corrigido
+            const restartButton = document.getElementById('restart-button');
+            const menuButton = document.getElementById('menu-button');
 
             const COLS = 10;
             const ROWS = 20;
@@ -643,14 +646,14 @@
                     pauseContent.classList.remove('hidden');
                     document.getElementById('pause-score').textContent = score;
                     if (scoreSynth && !Tone.Destination.mute) {
-                        scoreSynth.triggerAttackRelease("G4", "8n");
+                        scoreSynth.triggerAttackRelease("A4", "8n"); // Nota mais distinta para pausa
                     }
                 } else {
                     pauseCountdown = 3000;
                     modalOverlay.style.display = 'none';
                     pauseContent.classList.add('hidden');
                     if (scoreSynth && !Tone.Destination.mute) {
-                        scoreSynth.triggerAttackRelease("C5", "8n");
+                        scoreSynth.triggerAttackRelease("E5", "8n"); // Nota mais distinta para retomar
                     }
                     animationFrameId = requestAnimationFrame(update);
                 }
@@ -938,10 +941,6 @@
             }
             const pauseButton = document.getElementById('pause-button');
             pauseButton.addEventListener('click', togglePause);
-            const resumeButton = document.getElementById('resume-button');
-            const restartButton = document.getElementById('restart-button');
-            const menuButton = document.getElementById('menu-button');
-
             resumeButton.addEventListener('click', togglePause);
             restartButton.addEventListener('click', startGame);
             menuButton.addEventListener('click', () => {
