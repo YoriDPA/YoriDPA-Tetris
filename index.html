@@ -3,20 +3,25 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
-    <title>Jogo Tetris Competitivo</title>
+    <title>Neon Tetris</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <!-- Biblioteca de áudio Tone.js -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/tone/14.7.77/Tone.min.js"></script>
     <style>
+        @keyframes neon-pulse {
+            0% { text-shadow: 0 0 5px #fff, 0 0 10px #fff, 0 0 15px #00f7ff, 0 0 20px #ff00ff; }
+            50% { text-shadow: 0 0 10px #fff, 0 0 20px #fff, 0 0 30px #00f7ff, 0 0 40px #ff00ff; }
+            100% { text-shadow: 0 0 5px #fff, 0 0 10px #fff, 0 0 15px #00f7ff, 0 0 20px #ff00ff; }
+        }
         html, body {
             margin: 0;
             padding: 0;
             width: 100%;
             height: 100%;
             overflow: hidden;
-            background-color: #1a1a2e;
+            background: linear-gradient(135deg, #1a1a2e, #2a1a3e);
             color: #e0e0e0;
-            font-family: 'Russo One', sans-serif;
+            font-family: 'Orbitron', sans-serif;
             touch-action: none;
         }
         #game-container {
@@ -29,11 +34,12 @@
         }
         canvas#tetris-canvas {
             background-color: #0f0f1a;
-            border: 4px solid #4a4e69;
+            border: 4px solid #00f7ff;
             border-radius: 8px;
             box-sizing: border-box;
             max-width: 100vw;
             max-height: 100vh;
+            box-shadow: 0 0 15px rgba(0, 247, 255, 0.5);
         }
         .overlay {
             position: fixed;
@@ -45,51 +51,54 @@
             z-index: 100;
         }
         .modal-content {
-            background: #1a1a2e;
+            background: linear-gradient(135deg, #1a1a2e, #2a1a3e);
             padding: 20px;
             border-radius: 10px;
-            border: 3px solid #fca311;
+            border: 3px solid #ff00ff;
             text-align: center;
             width: 90%;
             max-width: 500px;
             max-height: 80vh;
             overflow-y: auto;
+            box-shadow: 0 0 20px rgba(255, 0, 255, 0.5);
         }
         .modal-content h1 {
             font-size: 2.5rem;
             margin-bottom: 1rem;
             color: #fff;
-            text-shadow: 0 0 5px #fff, 0 0 10px #fff, 0 0 15px #fca311, 0 0 20px #fca311;
+            animation: neon-pulse 2s infinite;
         }
         .modal-content p {
             font-size: 1rem;
             margin-bottom: 1.5rem;
         }
         .modal-content button {
-            background-color: #fca311;
+            background-color: #00f7ff;
             color: #1a1a2e;
             padding: 10px 20px;
             border: none;
             border-radius: 5px;
-            font-family: 'Russo One', sans-serif;
+            font-family: 'Orbitron', sans-serif;
             font-size: 1rem;
             cursor: pointer;
-            transition: background-color 0.2s;
+            transition: background-color 0.2s, box-shadow 0.2s;
             margin: 5px;
         }
         .modal-content button:hover {
-            background-color: #ffc300;
+            background-color: #00ccff;
+            box-shadow: 0 0 10px rgba(0, 247, 255, 0.7);
         }
         .modal-content button:disabled {
             background-color: #555;
             cursor: not-allowed;
+            box-shadow: none;
         }
         #score-popup {
             position: absolute;
             top: 10px;
             left: 50%;
             transform: translateX(-50%);
-            background-color: rgba(252, 163, 17, 0.85);
+            background-color: rgba(255, 0, 255, 0.85);
             color: #1a1a2e;
             padding: 10px 25px;
             border-radius: 20px;
@@ -107,8 +116,8 @@
             bottom: 10px;
             right: 15px;
             font-size: 0.8rem;
-            color: white;
-            opacity: 0.4;
+            color: #00f7ff;
+            opacity: 0.6;
             pointer-events: none;
         }
         #high-scores-container {
@@ -136,7 +145,7 @@
             display: inline-block;
             width: 30px;
             font-weight: bold;
-            color: #fca311;
+            color: #00f7ff;
         }
         #high-scores-list li .name {
             font-weight: bold;
@@ -146,12 +155,12 @@
         }
         #player-name-input {
             background-color: #0f0f1a;
-            border: 2px solid #4a4e69;
-            color: white;
+            border: 2px solid #00f7ff;
+            color: #e0e0e0;
             padding: 8px;
             border-radius: 5px;
             text-align: center;
-            font-family: 'Russo One', sans-serif;
+            font-family: 'Orbitron', sans-serif;
             margin-bottom: 10px;
         }
         #mute-button {
@@ -160,7 +169,7 @@
             left: 10px;
             width: 40px;
             height: 40px;
-            background-color: rgba(252, 163, 17, 0.4);
+            background-color: rgba(0, 247, 255, 0.4);
             border-radius: 50%;
             border: none;
             color: rgba(255, 255, 255, 0.7);
@@ -170,11 +179,11 @@
             align-items: center;
             cursor: pointer;
             z-index: 50;
-            transition: background-color 0.2s, color 0.2s;
+            transition: background-color 0.2s, box-shadow 0.2s;
         }
         #mute-button:hover {
-            background-color: rgba(252, 163, 17, 0.7);
-            color: white;
+            background-color: rgba(0, 247, 255, 0.7);
+            box-shadow: 0 0 10px rgba(0, 247, 255, 0.7);
         }
         #pause-button {
             position: absolute;
@@ -182,7 +191,7 @@
             left: 10px;
             width: 40px;
             height: 40px;
-            background-color: rgba(252, 163, 17, 0.4);
+            background-color: rgba(0, 247, 255, 0.4);
             border-radius: 50%;
             border: none;
             color: rgba(255, 255, 255, 0.7);
@@ -192,11 +201,11 @@
             align-items: center;
             cursor: pointer;
             z-index: 50;
-            transition: background-color 0.2s, color 0.2s;
+            transition: background-color 0.2s, box-shadow 0.2s;
         }
         #pause-button:hover {
-            background-color: rgba(252, 163, 17, 0.7);
-            color: white;
+            background-color: rgba(0, 247, 255, 0.7);
+            box-shadow: 0 0 10px rgba(0, 247, 255, 0.7);
         }
         #whatsapp-link {
             display: flex;
@@ -209,7 +218,7 @@
             text-decoration: none;
             color: #e0e0e0;
             background: linear-gradient(145deg, rgba(15, 15, 26, 0.5), rgba(74, 78, 105, 0.5));
-            border: 1px solid #4a4e69;
+            border: 1px solid #00f7ff;
             transition: transform 0.2s, box-shadow 0.2s;
             font-size: 0.9rem;
         }
@@ -230,7 +239,7 @@
             top: 10px;
             right: 10px;
             background-color: rgba(15, 15, 26, 0.5);
-            border: 2px solid #4a4e69;
+            border: 2px solid #00f7ff;
             border-radius: 8px;
             padding: 5px;
             z-index: 50;
@@ -245,7 +254,7 @@
             right: 60px;
             width: 40px;
             height: 40px;
-            background-color: rgba(252, 163, 17, 0.4);
+            background-color: rgba(0, 247, 255, 0.4);
             border-radius: 50%;
             border: none;
             color: rgba(255, 255, 255, 0.7);
@@ -255,16 +264,16 @@
             align-items: center;
             cursor: pointer;
             z-index: 50;
-            transition: background-color 0.2s, color 0.2s;
+            transition: background-color 0.2s, box-shadow 0.2s;
         }
         #fullscreen-button:hover {
-            background-color: rgba(252, 163, 17, 0.7);
-            color: white;
+            background-color: rgba(0, 247, 255, 0.7);
+            box-shadow: 0 0 10px rgba(0, 247, 255, 0.7);
         }
         #pause-content h2 {
             font-size: 2rem;
             color: #fff;
-            text-shadow: 0 0 5px #fff, 0 0 10px #fff, 0 0 15px #fca311;
+            text-shadow: 0 0 5px #fff, 0 0 10px #fff, 0 0 15px #00f7ff;
             margin-bottom: 1rem;
         }
         #pause-content p {
@@ -272,24 +281,25 @@
             margin-bottom: 1.5rem;
         }
         #pause-content button {
-            background-color: #fca311;
+            background-color: #00f7ff;
             color: #1a1a2e;
             padding: 10px 20px;
             border: none;
             border-radius: 5px;
-            font-family: 'Russo One', sans-serif;
+            font-family: 'Orbitron', sans-serif;
             font-size: 1rem;
             cursor: pointer;
-            transition: background-color 0.2s;
+            transition: background-color 0.2s, box-shadow 0.2s;
             margin: 5px;
         }
         #pause-content button:hover {
-            background-color: #ffc300;
+            background-color: #00ccff;
+            box-shadow: 0 0 10px rgba(0, 247, 255, 0.7);
         }
     </style>
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Russo+One&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700&display=swap" rel="stylesheet">
 </head>
 <body>
 
@@ -307,7 +317,7 @@
 
     <div id="modal-overlay" class="overlay">
         <div class="modal-content">
-            <h1 id="modal-title">TETRIS</h1>
+            <h1 id="modal-title">NEON TETRIS</h1>
             <p id="modal-text">Controles: Setas (PC) ou Toque/Arraste (Celular).</p>
             <div id="game-over-content" class="hidden">
                 <input type="text" id="player-name-input" placeholder="Digite seu nome" maxlength="10">
@@ -380,8 +390,8 @@
 
             let player, nextPiece, score, lines, level, dropCounter, dropInterval, lastTime;
             let isGameOver = true;
-            let isPaused = false; // Controla o estado de pausa
-            let pauseCountdown = 0; // Controla a contagem regressiva ao retomar
+            let isPaused = false;
+            let pauseCountdown = 0;
             let animationFrameId, scoreTimeout;
 
             let audioInitialized = false;
@@ -497,8 +507,8 @@
                 ctx.save();
                 ctx.fillStyle = 'rgba(0, 0, 0, 0.75)';
                 ctx.fillRect(0, 0, canvas.width, canvas.height);
-                ctx.fillStyle = '#fca311';
-                ctx.font = `${blockSize * 2}px 'Russo One', sans-serif`;
+                ctx.fillStyle = '#00f7ff';
+                ctx.font = `${blockSize * 2}px 'Orbitron', sans-serif`;
                 ctx.textAlign = 'center';
                 ctx.textBaseline = 'middle';
                 ctx.fillText(countdownValue.toString(), canvas.width / 2, canvas.height / 2);
@@ -927,7 +937,7 @@
             }
             const pauseButton = document.getElementById('pause-button');
             pauseButton.addEventListener('click', togglePause);
-            const resumeButton = document.getElementById('resume-button');
+            const resumeButton = document.getElementById('pause-content');
             const restartButton = document.getElementById('restart-button');
             const menuButton = document.getElementById('menu-button');
 
@@ -945,7 +955,7 @@
                 startButton.style.display = 'inline-block';
                 scoresButton.style.display = 'inline-block';
                 pauseContent.classList.add('hidden');
-                modalTitle.innerText = "TETRIS";
+                modalTitle.innerText = "NEON TETRIS";
                 modalText.innerText = "Controles: Setas (PC) ou Toque/Arraste (Celular).";
             });
 
