@@ -13,6 +13,11 @@
             50% { text-shadow: 0 0 10px #fff, 0 0 20px #fff, 0 0 30px #00f7ff, 0 0 40px #ff00ff; }
             100% { text-shadow: 0 0 5px #fff, 0 0 10px #fff, 0 0 15px #00f7ff, 0 0 20px #ff00ff; }
         }
+        @keyframes neon-glow {
+            0% { text-shadow: 0 0 3px #00f7ff, 0 0 6px #00f7ff; }
+            50% { text-shadow: 0 0 6px #00f7ff, 0 0 12px #00f7ff; }
+            100% { text-shadow: 0 0 3px #00f7ff, 0 0 6px #00f7ff; }
+        }
         html, body {
             margin: 0;
             padding: 0;
@@ -110,15 +115,6 @@
         }
         #score-popup.show {
             opacity: 1;
-        }
-        #dev-signature {
-            position: absolute;
-            bottom: 10px;
-            right: 15px;
-            font-size: 0.8rem;
-            color: #00f7ff;
-            opacity: 0.6;
-            pointer-events: none;
         }
         #high-scores-container {
             margin-top: 20px;
@@ -296,6 +292,12 @@
             background-color: #00ccff;
             box-shadow: 0 0 10px rgba(0, 247, 255, 0.7);
         }
+        .dev-signature {
+            font-size: 0.8rem;
+            margin-top: 15px;
+            color: #00f7ff;
+            animation: neon-glow 2s infinite;
+        }
     </style>
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -306,7 +308,6 @@
     <div id="game-container">
         <canvas id="tetris-canvas"></canvas>
         <div id="score-popup"><span id="score">0</span></div>
-        <div id="dev-signature">Dev. YoriDPA</div>
         <div id="mute-button">🔊</div>
         <div id="pause-button">⏸</div>
         <div id="next-piece-container">
@@ -344,7 +345,7 @@
                     <path fill="#FFFFFF" d="M34.918,32.332c-0.509,1.428-2.975,2.668-4.396,2.986c-2.135,0.477-4.296,0.821-7.537-0.528 c-4.25-1.771-7.816-4.715-10.404-8.057c-1.934-2.498-3.054-5.351-2.894-8.346c0.068-1.271,0.609-2.686,1.617-3.58 c0.678-0.6,1.573-0.951,2.49-0.951c0.303,0,0.604,0.03,0.901,0.09c0.963,0.193,1.703,1.047,2.009,2.008 c0.428,1.346,0.839,2.701,1.215,4.061c0.188,0.678,0.105,1.5-0.225,2.121c-0.27,0.509-0.601,0.951-1.008,1.35 c-0.375,0.369-0.795,0.779-0.885,1.305c-0.104,0.609,0.195,1.35,0.705,1.83c1.396,1.313,3.021,2.371,4.732,3.225 c0.885,0.441,1.83,0.672,2.76,0.396c0.525-0.156,0.975-0.555,1.35-0.924c0.795-0.789,1.77-1.74,2.805-1.74 c0.375,0,0.75,0.105,1.05,0.315c1.365,0.951,2.715,1.932,3.825,3.045C35.797,30.602,35.428,31.402,34.918,32.332z"/>
                 </svg>
             </a>
-            <p style="font-size: 0.8rem; margin-top: 15px; opacity: 0.7;">Dev. YoriDPA</p>
+            <p class="dev-signature">Dev. YoriDPA</p>
         </div>
     </div>
 
@@ -937,7 +938,7 @@
             }
             const pauseButton = document.getElementById('pause-button');
             pauseButton.addEventListener('click', togglePause);
-            const resumeButton = document.getElementById('pause-content');
+            const resumeButton = document.getElementById('resume-button');
             const restartButton = document.getElementById('restart-button');
             const menuButton = document.getElementById('menu-button');
 
