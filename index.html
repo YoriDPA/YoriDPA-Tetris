@@ -3,10 +3,19 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+    <meta name="description" content="Jogue Neon Tetris, um jogo clássico com visual neon e trilha sonora eletrônica. Desafie seus amigos e salve seus recordes no ranking global!">
+    <meta name="keywords" content="Neon Tetris, jogo Tetris, jogo online, arcade, ranking, Firebase">
+    <meta property="og:title" content="Neon Tetris - Jogo Clássico com Estilo Neon">
+    <meta property="og:description" content="Desfrute do Tetris com gráficos neon vibrantes e trilha sonora eletrônica. Salve sua pontuação e compita no ranking global!">
+    <meta property="og:image" content="URL_DA_IMAGEM_DO_JOGO">
+    <meta property="og:url" content="URL_DO_SEU_JOGO">
+    <meta name="twitter:card" content="summary_large_image">
+    <link rel="canonical" href="URL_DO_SEU_JOGO">
+    <link rel="icon" href="favicon.ico" type="image/x-icon">
     <title>Neon Tetris</title>
-    <script src="https://cdn.tailwindcss.com"></script>
-    <!-- Biblioteca de áudio Tone.js -->
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/tone/14.7.77/Tone.min.js"></script>
+    <script defer src="https://cdn.tailwindcss.com"></script>
+    <script defer src="https://cdnjs.cloudflare.com/ajax/libs/tone/14.7.77/Tone.min.js"></script>
+    <!-- Para separar CSS: <link rel="stylesheet" href="styles.min.css"> -->
     <style>
         @keyframes neon-pulse {
             0% { text-shadow: 0 0 5px #fff, 0 0 10px #fff, 0 0 15px #00f7ff, 0 0 20px #ff00ff; }
@@ -173,10 +182,8 @@
             font-family: 'Orbitron', sans-serif;
             margin-bottom: 10px;
         }
-        #mute-button {
+        #mute-button, #pause-button, #fullscreen-button {
             position: absolute;
-            top: 10px;
-            left: 10px;
             width: 40px;
             height: 40px;
             background-color: rgba(0, 247, 255, 0.4);
@@ -191,29 +198,10 @@
             z-index: 50;
             transition: background-color 0.2s, box-shadow 0.2s;
         }
-        #mute-button:hover {
-            background-color: rgba(0, 247, 255, 0.7);
-            box-shadow: 0 0 10px rgba(0, 247, 255, 0.7);
-        }
-        #pause-button {
-            position: absolute;
-            top: 60px;
-            left: 10px;
-            width: 40px;
-            height: 40px;
-            background-color: rgba(0, 247, 255, 0.4);
-            border-radius: 50%;
-            border: none;
-            color: rgba(255, 255, 255, 0.7);
-            font-size: 1.2rem;
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            cursor: pointer;
-            z-index: 50;
-            transition: background-color 0.2s, box-shadow 0.2s;
-        }
-        #pause-button:hover {
+        #mute-button { top: 10px; left: 10px; }
+        #pause-button { top: 60px; left: 10px; }
+        #fullscreen-button { top: 15px; right: 60px; }
+        #mute-button:hover, #pause-button:hover, #fullscreen-button:hover {
             background-color: rgba(0, 247, 255, 0.7);
             box-shadow: 0 0 10px rgba(0, 247, 255, 0.7);
         }
@@ -229,7 +217,7 @@
             color: #e0e0e0;
             background: linear-gradient(145deg, rgba(15, 15, 26, 0.5), rgba(74, 78, 105, 0.5));
             border: 1px solid #00f7ff;
-            transition: transform 0.2s, box-shadow 0.2s;
+            transition: transform 0.2s, box.UPDATE: 0.2s;
             font-size: 0.9rem;
         }
         #whatsapp-link:hover {
@@ -257,28 +245,6 @@
         }
         #next-piece-canvas {
             display: block;
-        }
-        #fullscreen-button {
-            position: absolute;
-            top: 15px;
-            right: 60px;
-            width: 40px;
-            height: 40px;
-            background-color: rgba(0, 247, 255, 0.4);
-            border-radius: 50%;
-            border: none;
-            color: rgba(255, 255, 255, 0.7);
-            font-size: 1.2rem;
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            cursor: pointer;
-            z-index: 50;
-            transition: background-color 0.2s, box-shadow 0.2s;
-        }
-        #fullscreen-button:hover {
-            background-color: rgba(0, 247, 255, 0.7);
-            box-shadow: 0 0 10px rgba(0, 247, 255, 0.7);
         }
         #pause-content h2 {
             font-size: 2rem;
@@ -312,13 +278,38 @@
             color: #00f7ff;
             animation: neon-glow 2s infinite;
         }
+        .mobile-controls {
+            position: fixed;
+            bottom: 20px;
+            left: 20px;
+            right: 20px;
+            display: none;
+            justify-content: space-between;
+            z-index: 50;
+        }
+        @media (max-width: 768px) {
+            .mobile-controls { display: flex; }
+        }
+        .mobile-btn {
+            background-color: rgba(0, 247, 255, 0.4);
+            border: 2px solid #00f7ff;
+            border-radius: 50%;
+            width: 60px;
+            height: 60px;
+            font-size: 1.5rem;
+            color: #fff;
+            cursor: pointer;
+            transition: background-color 0.2s;
+        }
+        .mobile-btn:hover {
+            background-color: rgba(0, 247, 255, 0.7);
+        }
     </style>
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700&display=swap" rel="stylesheet">
 </head>
 <body>
-
     <div id="game-container">
         <canvas id="tetris-canvas"></canvas>
         <div id="score-popup"><span id="score">0</span></div>
@@ -327,39 +318,46 @@
             <p>Linhas: <span id="game-lines">0</span></p>
             <p>Nível: <span id="game-level">1</span></p>
         </div>
-        <div id="mute-button">🔊</div>
-        <div id="pause-button">⏸</div>
+        <div id="mute-button" aria-label="Alternar som">🔊</div>
+        <div id="pause-button" aria-label="Pausar jogo">⏸</div>
         <div id="next-piece-container">
             <canvas id="next-piece-canvas"></canvas>
         </div>
-        <button id="fullscreen-button">⛶</button>
+        <button id="fullscreen-button" aria-label="Alternar tela cheia">⛶</button>
+        <div id="mobile-controls" class="mobile-controls">
+            <button class="mobile-btn" onclick="playerMove(-1)" aria-label="Mover para esquerda">⬅️</button>
+            <button class="mobile-btn" onclick="playerMove(1)" aria-label="Mover para direita">➡️</button>
+            <button class="mobile-btn" onclick="playerRotate()" aria-label="Rotacionar peça">🔄</button>
+            <button class="mobile-btn" onclick="playerHardDrop()" aria-label="Descida rápida">⬇️</button>
+        </div>
     </div>
 
-    <div id="modal-overlay" class="overlay">
+    <div id="modal-overlay" class="overlay" role="dialog" aria-labelledby="modal-title">
         <div class="modal-content">
             <h1 id="modal-title">NEON TETRIS</h1>
             <p id="modal-text">Controles: Setas (PC) ou Toque/Arraste (Celular). Toque duplo para descida rápida.</p>
             <div id="game-over-content" class="hidden">
-                <input type="text" id="player-name-input" placeholder="Digite seu nome" maxlength="10">
-                <button id="save-score-button">Salvar Recorde</button>
+                <input type="text" id="player-name-input" placeholder="Digite seu nome" maxlength="10" aria-label="Nome do jogador">
+                <button id="save-score-button" aria-label="Salvar recorde">Salvar Recorde</button>
             </div>
             <div id="pause-content" class="hidden">
                 <h2>JOGO PAUSADO</h2>
                 <p>Pontuação: <span id="pause-score">0</span> | Nível: <span id="pause-level">1</span></p>
-                <button id="resume-button">Continuar</button>
-                <button id="restart-button">Reiniciar</button>
-                <button id="menu-button">Voltar ao Menu</button>
+                <button id="resume-button" aria-label="Continuar jogo">Continuar</button>
+                <button id="restart-button" aria-label="Reiniciar jogo">Reiniciar</button>
+                <button id="menu-button" aria-label="Voltar ao menu">Voltar ao Menu</button>
             </div>
             <div>
-                <button id="start-button" disabled>Conectando...</button>
-                <button id="scores-button">Recordes</button>
+                <button id="start-button" disabled aria-label="Iniciar o jogo">Conectando...</button>
+                <button id="training-button" aria-label="Iniciar modo treinamento">Modo Treinamento</button>
+                <button id="scores-button" aria-label="Ver recordes">Recordes</button>
             </div>
             <div id="high-scores-container" class="hidden">
-                <ul id="high-scores-list"></ul>
+                <ul id="high-scores-list" aria-label="Lista de recordes"></ul>
             </div>
-            <a href="https://chat.whatsapp.com/BQVgfNFY7Cl3QLkZeV3Kau?mode=ems_copy_t" target="_blank" id="whatsapp-link">
+            <a href="https://chat.whatsapp.com/BQVgfNFY7Cl3QLkZeV3Kau?mode=ems_copy_t" target="_blank" id="whatsapp-link" aria-label="Entrar no grupo de atualizações do Neon Tetris">
                 <span>Para receber atualizações sobre o jogo, entre no grupo!</span>
-                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 48 48" class="whatsapp-icon">
+                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 48 48" class="whatsapp-icon" loading="lazy">
                     <path fill="#25D366" d="M24,4C12.954,4,4,12.954,4,24c0,3.375,0.837,6.652,2.423,9.586L4,44l10.737-2.814 c2.606,1.418,5.511,2.232,8.604,2.232C35.046,43.418,44,34.464,44,24S35.046,4.582,24,4.582V4z"/>
                     <path fill="#FFFFFF" d="M34.918,32.332c-0.509,1.428-2.975,2.668-4.396,2.986c-2.135,0.477-4.296,0.821-7.537-0.528 c-4.25-1.771-7.816-4.715-10.404-8.057c-1.934-2.498-3.054-5.351-2.894-8.346c0.068-1.271,0.609-2.686,1.617-3.58 c0.678-0.6,1.573-0.951,2.49-0.951c0.303,0,0.604,0.03,0.901,0.09c0.963,0.193,1.703,1.047,2.009,2.008 c0.428,1.346,0.839,2.701,1.215,4.061c0.188,0.678,0.105,1.5-0.225,2.121c-0.27,0.509-0.601,0.951-1.008,1.35 c-0.375,0.369-0.795,0.779-0.885,1.305c-0.104,0.609,0.195,1.35,0.705,1.83c1.396,1.313,3.021,2.371,4.732,3.225 c0.885,0.441,1.83,0.672,2.76,0.396c0.525-0.156,0.975-0.555,1.35-0.924c0.795-0.789,1.77-1.74,2.805-1.74 c0.375,0,0.75,0.105,1.05,0.315c1.365,0.951,2.715,1.932,3.825,3.045C35.797,30.602,35.428,31.402,34.918,32.332z"/>
                 </svg>
@@ -368,14 +366,13 @@
         </div>
     </div>
 
+    <!-- Para separar JS: <script defer src="game.min.js" type="module"></script> -->
     <script type="module">
-        // Importações do Firebase
         import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
         import { getAuth, signInAnonymously, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
         import { getFirestore, collection, doc, getDoc, setDoc, query, orderBy, limit, getDocs } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
 
         window.addEventListener('load', () => {
-            // --- Variáveis Globais e Configuração ---
             const canvas = document.getElementById('tetris-canvas');
             const ctx = canvas.getContext('2d');
             const nextPieceCanvas = document.getElementById('next-piece-canvas');
@@ -385,6 +382,7 @@
             const modalTitle = document.getElementById('modal-title');
             const modalText = document.getElementById('modal-text');
             const startButton = document.getElementById('start-button');
+            const trainingButton = document.getElementById('training-button');
             const scoresButton = document.getElementById('scores-button');
             const highScoresContainer = document.getElementById('high-scores-container');
             const highScoresList = document.getElementById('high-scores-list');
@@ -421,18 +419,21 @@
             let isGameOver = true;
             let isPaused = false;
             let pauseCountdown = 0;
+            let isTrainingMode = false;
             let animationFrameId, scoreTimeout, lineClearTimeout;
             let lastTouchTime = 0;
-
             let audioInitialized = false;
             let musicSynth, scoreSynth, musicLoop;
-
             let db, auth;
             const persistentAppId = 'tetris-yoridpa-global';
-
             let isSoftDrop = false;
             let softDropTimeout;
             let isHolding = false;
+
+            const achievements = [
+                { id: 'lines10', name: 'Limpador Novato', condition: () => lines >= 10, reward: 100, unlocked: false },
+                { id: 'level5', name: 'Mestre do Nível', condition: () => level >= 5, reward: 500, unlocked: false }
+            ];
 
             async function initFirebase() {
                 const firebaseConfig = {
@@ -496,7 +497,10 @@
                 if (!ctx) return;
                 ctx.clearRect(0, 0, canvas.width, canvas.height);
                 drawMatrix(board, { x: 0, y: 0 });
-                if (player) drawMatrix(player.matrix, { x: player.x, y: player.y });
+                if (player) {
+                    drawGhostPiece();
+                    drawMatrix(player.matrix, { x: player.x, y: player.y });
+                }
             }
             function drawMatrix(matrix, offset) {
                 matrix.forEach((row, y) => {
@@ -516,11 +520,9 @@
                 nextPieceCanvas.width = 4 * scale;
                 nextPieceCanvas.height = 4 * scale;
                 nextPieceCtx.clearRect(0, 0, nextPieceCanvas.width, nextPieceCanvas.height);
-                
                 const piece = nextPiece.matrix;
                 const offsetX = (nextPieceCanvas.width - piece[0].length * scale) / 2;
                 const offsetY = (nextPieceCanvas.height - piece.length * scale) / 2;
-
                 piece.forEach((row, y) => {
                     row.forEach((value, x) => {
                         if (value !== 0) {
@@ -551,7 +553,6 @@
                     ctx.fillRect(0, y * blockSize, canvas.width, blockSize);
                 });
                 ctx.globalAlpha = 0.7;
-                ctx.animation = 'line-clear-flash 0.5s forwards';
                 ctx.restore();
                 lineClearTimeout = setTimeout(() => {
                     draw();
@@ -567,6 +568,18 @@
                 touchFeedbackTimeout = setTimeout(() => {
                     draw();
                 }, 100);
+            }
+            function drawGhostPiece() {
+                if (!player) return;
+                ctx.save();
+                ctx.globalAlpha = 0.3;
+                let ghostY = player.y;
+                while (!checkCollision(board, { ...player, y: ghostY })) {
+                    ghostY++;
+                }
+                ghostY--;
+                drawMatrix(player.matrix, { x: player.x, y: ghostY });
+                ctx.restore();
             }
             function merge(board, player) {
                 player.matrix.forEach((row, y) => {
@@ -602,6 +615,18 @@
                         return;
                     }
                 }
+                ctx.save();
+                ctx.globalAlpha = 0.5;
+                ctx.fillStyle = '#ff00ff';
+                player.matrix.forEach((row, y) => {
+                    row.forEach((value, x) => {
+                        if (value !== 0) {
+                            ctx.fillRect((player.x + x) * blockSize, (player.y + y) * blockSize, blockSize, blockSize);
+                        }
+                    });
+                });
+                ctx.restore();
+                setTimeout(draw, 100);
             }
             function playerMove(dir) {
                 if (!player) return;
@@ -627,6 +652,17 @@
                 resetPlayer();
                 dropCounter = 0;
             }
+            function checkAchievements() {
+                achievements.forEach(ach => {
+                    if (!ach.unlocked && ach.condition()) {
+                        ach.unlocked = true;
+                        score += ach.reward;
+                        scorePopup.innerHTML = `Conquista: ${ach.name}!`;
+                        scorePopup.classList.add('show');
+                        setTimeout(() => scorePopup.classList.remove('show'), 2000);
+                    }
+                });
+            }
             function sweepLines() {
                 let clearedLines = 0;
                 let clearedLineIndices = [];
@@ -643,7 +679,7 @@
                 if (clearedLines > 0) {
                     if (scoreSynth) {
                         scoreSynth.triggerAttackRelease("C5", "8n");
-                        scoreSynth.triggerAttackRelease("F5", "8n", "+0.1"); // Som adicional para linha
+                        scoreSynth.triggerAttackRelease("F5", "8n", "+0.1");
                     }
                     drawLineClearEffect(clearedLineIndices);
                     lines += clearedLines;
@@ -657,15 +693,15 @@
                     scoreTimeout = setTimeout(() => scorePopup.classList.remove('show'), 1500);
                     if (Math.floor(lines / 10) + 1 > level) {
                         level = Math.floor(lines / 10) + 1;
-                        dropInterval = Math.max(150, 1000 - (level * 50));
+                        dropInterval = isTrainingMode ? Math.max(300, 2000 - (level * 100)) : Math.max(150, 1000 - (level * 50));
                         gameLevelEl.textContent = level;
                     }
+                    checkAchievements();
                 }
             }
             function update(time = 0) {
                 if (isGameOver || isPaused) {
                     if (pauseCountdown > 0) {
-                        // Exibe contagem regressiva
                         const countdownValue = Math.ceil(pauseCountdown / 1000);
                         drawPauseCountdown(countdownValue);
                         pauseCountdown -= time - lastTime;
@@ -690,6 +726,7 @@
             }
             function togglePause() {
                 if (isGameOver) return;
+                clearTimeout(touchFeedbackTimeout);
                 isPaused = !isPaused;
                 if (isPaused) {
                     cancelAnimationFrame(animationFrameId);
@@ -700,6 +737,7 @@
                     modalTitle.style.display = 'none';
                     modalText.style.display = 'none';
                     startButton.style.display = 'none';
+                    trainingButton.style.display = 'none';
                     scoresButton.style.display = 'none';
                     gameOverContent.classList.add('hidden');
                     highScoresContainer.classList.add('hidden');
@@ -728,12 +766,22 @@
                     document.exitFullscreen();
                 }
             }
+            function debounce(func, wait) {
+                let timeout;
+                return function executedFunction(...args) {
+                    const later = () => {
+                        clearTimeout(timeout);
+                        func(...args);
+                    };
+                    clearTimeout(timeout);
+                    timeout = setTimeout(later, wait);
+                };
+            }
             function handleResize() {
                 const windowWidth = window.innerWidth;
                 const windowHeight = window.innerHeight;
                 const aspectRatio = COLS / ROWS;
                 let canvasWidth, canvasHeight;
-
                 if (windowWidth / windowHeight > aspectRatio) {
                     canvasHeight = windowHeight;
                     canvasWidth = canvasHeight * aspectRatio;
@@ -741,41 +789,33 @@
                     canvasWidth = windowWidth;
                     canvasHeight = canvasWidth / aspectRatio;
                 }
-
                 blockSize = Math.floor(canvasWidth / COLS);
                 canvas.width = COLS * blockSize;
                 canvas.height = ROWS * blockSize;
-
                 canvas.style.width = `${canvasWidth}px`;
                 canvas.style.height = `${canvasHeight}px`;
-
                 nextPieceCanvas.width = 4 * 15;
                 nextPieceCanvas.height = 4 * 15;
-
                 if (!isGameOver) draw();
             }
-            
             function initAudio() {
                 if (audioInitialized || typeof window.Tone === 'undefined') return;
                 musicSynth = new Tone.Synth({
                     oscillator: { type: 'fmsquare' },
                     envelope: { attack: 0.01, decay: 0.1, sustain: 0.2, release: 0.1 }
                 }).toDestination();
-                
                 scoreSynth = new Tone.Synth({
                     oscillator: { type: 'triangle8' },
                     envelope: { attack: 0.005, decay: 0.1, sustain: 0.3, release: 1 }
                 }).toDestination();
-
                 musicLoop = new Tone.Sequence((time, note) => {
                     if (musicSynth) musicSynth.triggerAttackRelease(note, '8n', time);
                 }, ['C2', ['E2', 'G2'], 'A2', 'G2'], '4n');
-                
                 Tone.Transport.bpm.value = 120;
                 audioInitialized = true;
             }
-
-            async function startGame() {
+            async function startGame(mode = 'normal') {
+                isTrainingMode = (mode === 'training');
                 try {
                     if (typeof Tone !== 'undefined' && !audioInitialized) {
                         await Tone.start();
@@ -788,17 +828,19 @@
                 } catch (e) {
                     console.error("Falha ao iniciar o áudio:", e);
                 }
-
                 if (animationFrameId) cancelAnimationFrame(animationFrameId);
+                clearTimeout(scoreTimeout);
+                clearTimeout(lineClearTimeout);
+                clearTimeout(touchFeedbackTimeout);
                 isGameOver = false;
                 isPaused = false;
                 pauseCountdown = 0;
                 board = createBoard();
                 score = 0; lines = 0; level = 1;
-                dropInterval = 1000; dropCounter = 0; lastTime = 0;
+                dropInterval = isTrainingMode ? 2000 : 1000;
+                dropCounter = 0; lastTime = 0;
                 player = null; nextPiece = null;
                 scorePopup.classList.remove('show');
-                if (scoreTimeout) clearTimeout(scoreTimeout);
                 gameScoreEl.textContent = score;
                 gameLinesEl.textContent = lines;
                 gameLevelEl.textContent = level;
@@ -812,20 +854,24 @@
                 }
                 update();
             }
-
             async function gameOver() {
+                if (isTrainingMode) {
+                    resetPlayer();
+                    return;
+                }
                 isGameOver = true;
                 if (typeof Tone !== 'undefined' && Tone.Transport.state === 'started') {
                     Tone.Transport.stop();
                 }
                 if (musicLoop) musicLoop.stop();
                 cancelAnimationFrame(animationFrameId);
-                
+                clearTimeout(scoreTimeout);
+                clearTimeout(lineClearTimeout);
+                clearTimeout(touchFeedbackTimeout);
                 modalTitle.innerText = "FIM DE JOGO";
                 modalText.innerText = `Sua pontuação final: ${score}`;
                 startButton.innerText = "Jogar Novamente";
                 highScoresContainer.classList.add('hidden');
-                
                 try {
                     if (score > 0 && auth && auth.currentUser) {
                         await handlePlayerRecord();
@@ -844,13 +890,11 @@
                     modalOverlay.style.display = 'flex';
                 }
             }
-
             async function handlePlayerRecord() {
                 if (!auth.currentUser) return;
                 const userId = auth.currentUser.uid;
                 const userDocRef = doc(db, `/artifacts/${persistentAppId}/users/${userId}`);
                 const userDocSnap = await getDoc(userDocRef);
-
                 if (userDocSnap.exists() && userDocSnap.data().name) {
                     const playerName = userDocSnap.data().name;
                     modalText.innerText += `\nRecorde salvo para ${playerName}.`;
@@ -863,12 +907,10 @@
                     saveScoreButton.innerText = "Salvar Recorde";
                 }
             }
-            
             async function updatePlayerBestScore(userId, name, newScore) {
                 if (!db) return;
                 const scoreDocRef = doc(db, `/artifacts/${persistentAppId}/public/data/tetris_highscores/${userId}`);
                 const scoreDocSnap = await getDoc(scoreDocRef);
-
                 if (scoreDocSnap.exists()) {
                     const oldScore = scoreDocSnap.data().score;
                     if (newScore > oldScore) {
@@ -878,23 +920,18 @@
                     await setDoc(scoreDocRef, { name, score: newScore, createdAt: new Date() });
                 }
             }
-
             async function displayHighScores() {
                 if (!db) return;
                 highScoresList.innerHTML = '<li>Carregando...</li>';
-                
                 try {
                     const scoresCollection = collection(db, `/artifacts/${persistentAppId}/public/data/tetris_highscores`);
                     const q = query(scoresCollection, orderBy("score", "desc"), limit(10));
                     const querySnapshot = await getDocs(q);
-                    
                     let scores = [];
                     querySnapshot.forEach((doc) => {
                         scores.push(doc.data());
                     });
-                    
                     highScoresList.innerHTML = '';
-
                     if (scores.length === 0) {
                         highScoresList.innerHTML = '<li>Nenhum recorde ainda.</li>';
                     } else {
@@ -906,10 +943,9 @@
                     }
                 } catch (e) {
                     console.error("Erro ao buscar recordes: ", e);
-                    highScoresList.innerHTML = '<li>Erro ao carregar recordes.</li>';
+                    highScoresList.innerHTML = '<li>Erro ao carregar recordes. Verifique sua conexão.</li>';
                 }
             }
-
             document.addEventListener('keydown', event => {
                 if (isGameOver) return;
                 if (event.key === 'ArrowLeft') playerMove(-1);
@@ -922,19 +958,17 @@
                 else if (event.code === 'Space') playerHardDrop();
                 else if (event.key.toLowerCase() === 'p') togglePause();
             });
-
             document.addEventListener('keyup', event => {
                 if (isGameOver) return;
                 if (event.key === 'ArrowDown') isSoftDrop = false;
             });
-            
             let touchStartX, touchStartY, isDragging;
             document.addEventListener('touchstart', e => {
                 if (isGameOver) return;
                 e.preventDefault();
                 const currentTime = Date.now();
                 if (currentTime - lastTouchTime < 300) {
-                    playerHardDrop(); // Toque duplo para hard drop
+                    playerHardDrop();
                     lastTouchTime = 0;
                     return;
                 }
@@ -949,7 +983,6 @@
                     isHolding = true;
                 }, 300);
             }, { passive: false });
-
             document.addEventListener('touchmove', e => {
                 if (isGameOver) return;
                 e.preventDefault();
@@ -966,7 +999,6 @@
                     drawTouchFeedback();
                 }
             }, { passive: false });
-            
             document.addEventListener('touchend', e => {
                 if (isGameOver) return;
                 clearTimeout(softDropTimeout);
@@ -981,16 +1013,20 @@
                 }
                 isHolding = false;
             });
-
-            window.addEventListener('resize', handleResize);
-            startButton.addEventListener('click', startGame);
+            window.addEventListener('resize', debounce(handleResize, 100));
+            startButton.addEventListener('click', () => startGame('normal'));
+            trainingButton.addEventListener('click', () => startGame('training'));
             scoresButton.addEventListener('click', () => {
                 displayHighScores();
                 highScoresContainer.classList.toggle('hidden');
             });
             saveScoreButton.addEventListener('click', async () => {
                 const name = playerNameInput.value.trim();
-                if (name && auth.currentUser) {
+                if (name.length < 3 || name.length > 10 || !/^[a-zA-Z0-9\s]+$/.test(name)) {
+                    alert("O nome deve ter entre 3 e 10 caracteres e conter apenas letras, números ou espaços.");
+                    return;
+                }
+                if (auth.currentUser) {
                     saveScoreButton.disabled = true;
                     saveScoreButton.innerText = "Salvando...";
                     const userId = auth.currentUser.uid;
@@ -998,7 +1034,7 @@
                     await updatePlayerBestScore(userId, name, score);
                     saveScoreButton.innerText = "Salvo!";
                 } else {
-                    alert("Por favor, digite seu nome.");
+                    alert("Erro: usuário não autenticado.");
                 }
             });
             muteButton.addEventListener('click', () => {
@@ -1008,17 +1044,14 @@
                     muteButton.textContent = Tone.Destination.mute ? '🔇' : '🔊';
                 }
             });
-            const fullscreenButton = document.getElementById('fullscreen-button');
-            if (fullscreenButton) {
-                fullscreenButton.addEventListener('click', toggleFullscreen);
-            }
-            const pauseButton = document.getElementById('pause-button');
-            pauseButton.addEventListener('click', togglePause);
+            document.getElementById('fullscreen-button').addEventListener('click', toggleFullscreen);
+            document.getElementById('pause-button').addEventListener('click', togglePause);
             resumeButton.addEventListener('click', togglePause);
-            restartButton.addEventListener('click', startGame);
+            restartButton.addEventListener('click', () => startGame(isTrainingMode ? 'training' : 'normal'));
             menuButton.addEventListener('click', () => {
                 isGameOver = true;
                 if (animationFrameId) cancelAnimationFrame(animationFrameId);
+                clearTimeout(touchFeedbackTimeout);
                 if (typeof Tone !== 'undefined' && Tone.Transport.state === 'started') {
                     Tone.Transport.stop();
                 }
@@ -1026,17 +1059,16 @@
                 modalTitle.style.display = 'block';
                 modalText.style.display = 'block';
                 startButton.style.display = 'inline-block';
+                trainingButton.style.display = 'inline-block';
                 scoresButton.style.display = 'inline-block';
                 pauseContent.classList.add('hidden');
                 modalTitle.innerText = "NEON TETRIS";
                 modalText.innerText = "Controles: Setas (PC) ou Toque/Arraste (Celular). Toque duplo para descida rápida.";
             });
-
             async function main() {
                 await initFirebase();
                 handleResize();
             }
-            
             main();
         });
     </script>
