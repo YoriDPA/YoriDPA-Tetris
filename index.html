@@ -18,6 +18,10 @@
             50% { text-shadow: 0 0 6px #00f7ff, 0 0 12px #00f7ff; }
             100% { text-shadow: 0 0 3px #00f7ff, 0 0 6px #00f7ff; }
         }
+        @keyframes line-clear-flash {
+            0% { opacity: 0.7; }
+            100% { opacity: 0; }
+        }
         html, body {
             margin: 0;
             padding: 0;
@@ -115,6 +119,16 @@
         }
         #score-popup.show {
             opacity: 1;
+        }
+        #game-info {
+            position: absolute;
+            top: 60px;
+            right: 10px;
+            color: #00f7ff;
+            font-size: 1rem;
+            text-align: right;
+            z-index: 10;
+            text-shadow: 0 0 5px rgba(0, 247, 255, 0.7);
         }
         #high-scores-container {
             margin-top: 20px;
@@ -308,6 +322,11 @@
     <div id="game-container">
         <canvas id="tetris-canvas"></canvas>
         <div id="score-popup"><span id="score">0</span></div>
+        <div id="game-info">
+            <p>Pontuação: <span id="game-score">0</span></p>
+            <p>Linhas: <span id="game-lines">0</span></p>
+            <p>Nível: <span id="game-level">1</span></p>
+        </div>
         <div id="mute-button">🔊</div>
         <div id="pause-button">⏸</div>
         <div id="next-piece-container">
@@ -319,14 +338,14 @@
     <div id="modal-overlay" class="overlay">
         <div class="modal-content">
             <h1 id="modal-title">NEON TETRIS</h1>
-            <p id="modal-text">Controles: Setas (PC) ou Toque/Arraste (Celular).</p>
+            <p id="modal-text">Controles: Setas (PC) ou Toque/Arraste (Celular). Toque duplo para descida rápida.</p>
             <div id="game-over-content" class="hidden">
                 <input type="text" id="player-name-input" placeholder="Digite seu nome" maxlength="10">
                 <button id="save-score-button">Salvar Recorde</button>
             </div>
             <div id="pause-content" class="hidden">
                 <h2>JOGO PAUSADO</h2>
-                <p>Pontuação atual: <span id="pause-score">0</span></p>
+                <p>Pontuação: <span id="pause-score">0</span> | Nível: <span id="pause-level">1</span></p>
                 <button id="resume-button">Continuar</button>
                 <button id="restart-button">Reiniciar</button>
                 <button id="menu-button">Voltar ao Menu</button>
@@ -371,12 +390,17 @@
             const highScoresList = document.getElementById('high-scores-list');
             const scorePopup = document.getElementById('score-popup');
             const scoreEl = document.getElementById('score');
+            const gameScoreEl = document.getElementById('game-score');
+            const gameLinesEl = document.getElementById('game-lines');
+            const gameLevelEl = document.getElementById('game-level');
             const gameOverContent = document.getElementById('game-over-content');
             const playerNameInput = document.getElementById('player-name-input');
             const saveScoreButton = document.getElementById('save-score-button');
             const muteButton = document.getElementById('mute-button');
             const pauseContent = document.getElementById('pause-content');
-            const resumeButton = document.getElementById('resume-button'); // Corrigido
+            const pauseScoreEl = document.getElementById('pause-score');
+            const pauseLevelEl = document.getElementById('pause-level');
+            const resumeButton = document.getElementById('resume-button');
             const restartButton = document.getElementById('restart-button');
             const menuButton = document.getElementById('menu-button');
 
@@ -384,6 +408,7 @@
             const ROWS = 20;
             let blockSize;
             let board = [];
+            let touchFeedbackTimeout;
 
             const COLORS = [null, '#FF0D72', '#0DC2FF', '#0DFF72', '#F538FF', '#FF8E0D', '#FFE138', '#3877F5'];
             const SHAPES = [
@@ -396,7 +421,8 @@
             let isGameOver = true;
             let isPaused = false;
             let pauseCountdown = 0;
-            let animationFrameId, scoreTimeout;
+            let animationFrameId, scoreTimeout, lineClearTimeout;
+            let lastTouchTime = 0;
 
             let audioInitialized = false;
             let musicSynth, scoreSynth, musicLoop;
@@ -518,6 +544,30 @@
                 ctx.fillText(countdownValue.toString(), canvas.width / 2, canvas.height / 2);
                 ctx.restore();
             }
+            function drawLineClearEffect(clearedLines) {
+                ctx.save();
+                ctx.fillStyle = 'rgba(0, 247, 255, 0.7)';
+                clearedLines.forEach(y => {
+                    ctx.fillRect(0, y * blockSize, canvas.width, blockSize);
+                });
+                ctx.globalAlpha = 0.7;
+                ctx.animation = 'line-clear-flash 0.5s forwards';
+                ctx.restore();
+                lineClearTimeout = setTimeout(() => {
+                    draw();
+                }, 500);
+            }
+            function drawTouchFeedback() {
+                ctx.save();
+                ctx.strokeStyle = '#00f7ff';
+                ctx.lineWidth = 4;
+                ctx.strokeRect(0, 0, canvas.width, canvas.height);
+                ctx.restore();
+                clearTimeout(touchFeedbackTimeout);
+                touchFeedbackTimeout = setTimeout(() => {
+                    draw();
+                }, 100);
+            }
             function merge(board, player) {
                 player.matrix.forEach((row, y) => {
                     row.forEach((value, x) => {
@@ -579,26 +629,36 @@
             }
             function sweepLines() {
                 let clearedLines = 0;
+                let clearedLineIndices = [];
                 outer: for (let y = board.length - 1; y > 0; --y) {
                     for (let x = 0; x < board[y].length; ++x) {
                         if (board[y][x] === 0) continue outer;
                     }
+                    clearedLineIndices.push(y);
                     board.splice(y, 1);
                     board.unshift(Array(COLS).fill(0));
                     y++;
                     clearedLines++;
                 }
                 if (clearedLines > 0) {
-                    if (scoreSynth) scoreSynth.triggerAttackRelease("C5", "8n");
+                    if (scoreSynth) {
+                        scoreSynth.triggerAttackRelease("C5", "8n");
+                        scoreSynth.triggerAttackRelease("F5", "8n", "+0.1"); // Som adicional para linha
+                    }
+                    drawLineClearEffect(clearedLineIndices);
                     lines += clearedLines;
                     score += [0, 100, 300, 500, 800][clearedLines] * level;
                     scoreEl.textContent = score;
+                    gameScoreEl.textContent = score;
+                    gameLinesEl.textContent = lines;
+                    gameLevelEl.textContent = level;
                     scorePopup.classList.add('show');
                     if (scoreTimeout) clearTimeout(scoreTimeout);
                     scoreTimeout = setTimeout(() => scorePopup.classList.remove('show'), 1500);
                     if (Math.floor(lines / 10) + 1 > level) {
                         level = Math.floor(lines / 10) + 1;
                         dropInterval = Math.max(150, 1000 - (level * 50));
+                        gameLevelEl.textContent = level;
                     }
                 }
             }
@@ -644,16 +704,17 @@
                     gameOverContent.classList.add('hidden');
                     highScoresContainer.classList.add('hidden');
                     pauseContent.classList.remove('hidden');
-                    document.getElementById('pause-score').textContent = score;
+                    pauseScoreEl.textContent = score;
+                    pauseLevelEl.textContent = level;
                     if (scoreSynth && !Tone.Destination.mute) {
-                        scoreSynth.triggerAttackRelease("A4", "8n"); // Nota mais distinta para pausa
+                        scoreSynth.triggerAttackRelease("A4", "8n");
                     }
                 } else {
                     pauseCountdown = 3000;
                     modalOverlay.style.display = 'none';
                     pauseContent.classList.add('hidden');
                     if (scoreSynth && !Tone.Destination.mute) {
-                        scoreSynth.triggerAttackRelease("E5", "8n"); // Nota mais distinta para retomar
+                        scoreSynth.triggerAttackRelease("E5", "8n");
                     }
                     animationFrameId = requestAnimationFrame(update);
                 }
@@ -738,6 +799,9 @@
                 player = null; nextPiece = null;
                 scorePopup.classList.remove('show');
                 if (scoreTimeout) clearTimeout(scoreTimeout);
+                gameScoreEl.textContent = score;
+                gameLinesEl.textContent = lines;
+                gameLevelEl.textContent = level;
                 handleResize();
                 resetPlayer();
                 modalOverlay.style.display = 'none';
@@ -868,10 +932,18 @@
             document.addEventListener('touchstart', e => {
                 if (isGameOver) return;
                 e.preventDefault();
+                const currentTime = Date.now();
+                if (currentTime - lastTouchTime < 300) {
+                    playerHardDrop(); // Toque duplo para hard drop
+                    lastTouchTime = 0;
+                    return;
+                }
+                lastTouchTime = currentTime;
                 isDragging = false;
                 isHolding = false;
                 touchStartX = e.touches[0].clientX;
                 touchStartY = e.touches[0].clientY;
+                drawTouchFeedback();
                 softDropTimeout = setTimeout(() => {
                     isSoftDrop = true;
                     isHolding = true;
@@ -883,7 +955,7 @@
                 e.preventDefault();
                 const dx = e.touches[0].clientX - touchStartX;
                 const dy = e.touches[0].clientY - touchStartY;
-                if (Math.abs(dx) > 20 || Math.abs(dy) > 20) {
+                if (Math.abs(dx) > 15 || Math.abs(dy) > 15) {
                     isDragging = true;
                     clearTimeout(softDropTimeout);
                 }
@@ -891,6 +963,7 @@
                     playerMove(dx > 0 ? 1 : -1);
                     touchStartX = e.touches[0].clientX;
                     touchStartY = e.touches[0].clientY;
+                    drawTouchFeedback();
                 }
             }, { passive: false });
             
@@ -956,7 +1029,7 @@
                 scoresButton.style.display = 'inline-block';
                 pauseContent.classList.add('hidden');
                 modalTitle.innerText = "NEON TETRIS";
-                modalText.innerText = "Controles: Setas (PC) ou Toque/Arraste (Celular).";
+                modalText.innerText = "Controles: Setas (PC) ou Toque/Arraste (Celular). Toque duplo para descida rápida.";
             });
 
             async function main() {
